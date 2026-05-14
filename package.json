@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://cavedragon13.github.io/horse-racing-v2",
+  "homepage": "https://seed13.com",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
