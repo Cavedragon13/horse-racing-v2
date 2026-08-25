@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { GAME_CONFIG } from '../utils/constants'
 import { loadLeaderboard } from '../utils/leaderboard'
 import { LeaderboardDisplay } from './Leaderboard'
+import { HowToPlayModal, HowToPlayTeaser } from './HowToPlay'
+import { useHowToPlayTeaser } from '../utils/useHowToPlayTeaser'
 
 const LENGTH_OPTIONS = [
   { label: '5 Races', value: 5, sub: 'Quick' },
@@ -14,11 +16,32 @@ export default function SetupScreen({ onStart, savedData }) {
   const [numAI, setNumAI] = useState(1)
   const [totalRaces, setTotalRaces] = useState(10)
   const [leaderboard] = useState(() => loadLeaderboard())
+  const [showHowToPlay, setShowHowToPlay] = useState(false)
+  const [teaserVisible, setTeaserVisible] = useHowToPlayTeaser(!showHowToPlay)
 
   const canStart = name.trim().length > 0
 
+  const openHowToPlay = () => {
+    setTeaserVisible(false)
+    setShowHowToPlay(true)
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-slate-950">
+      {/* How to Play */}
+      <button
+        onClick={openHowToPlay}
+        className="fixed top-4 right-4 z-30 flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-600 text-slate-400 hover:text-slate-200 text-xs font-bold uppercase tracking-widest rounded-full px-4 py-2 transition-colors"
+      >
+        📖 How to Play
+      </button>
+      <HowToPlayModal open={showHowToPlay} onClose={() => setShowHowToPlay(false)} />
+      <HowToPlayTeaser
+        visible={teaserVisible}
+        onOpen={openHowToPlay}
+        onDismiss={() => setTeaserVisible(false)}
+      />
+
       {/* Raven hero */}
       <div className="relative mb-6 select-none">
         <img
