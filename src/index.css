@@ -1,7 +1,66 @@
 @import "tailwindcss";
 
+/*
+ * Racetrack theme: the default Tailwind slate/yellow/red/purple/green/amber
+ * scales are redefined here (not renamed) so every existing bg-slate-900,
+ * text-yellow-400, etc. utility across the app picks up the new palette
+ * automatically — deep pine green surfaces, antique brass accents, a
+ * maroon "wager" red, and a plum "silk" purple for parlay callouts.
+ */
+@theme {
+  --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-white: #f4efe0;
+
+  --color-slate-50: #f8fbf9;
+  --color-slate-100: #f2f8f4;
+  --color-slate-200: #e1efe6;
+  --color-slate-300: #c7e1cf;
+  --color-slate-400: #88bf9a;
+  --color-slate-500: #549c6c;
+  --color-slate-600: #3e7450;
+  --color-slate-700: #2e563c;
+  --color-slate-800: #1e3827;
+  --color-slate-900: #142419;
+  --color-slate-950: #0b140e;
+
+  --color-yellow-300: #f0dc94;
+  --color-yellow-400: #e0bd52;
+  --color-yellow-500: #c9a227;
+  --color-yellow-600: #a6841e;
+
+  --color-red-400: #e2696a;
+  --color-red-500: #cf4547;
+  --color-red-600: #ac2f31;
+  --color-red-800: #6e1d1f;
+  --color-red-900: #4a1415;
+  --color-red-950: #2c0c0d;
+
+  --color-purple-200: #ddc9f0;
+  --color-purple-300: #c7a4e8;
+  --color-purple-400: #b083da;
+  --color-purple-500: #9a63c9;
+  --color-purple-600: #7d47ac;
+  --color-purple-700: #603691;
+  --color-purple-950: #241033;
+
+  --color-green-300: #7fe3b4;
+  --color-green-400: #4bcf99;
+  --color-green-500: #22b67d;
+  --color-green-700: #157a54;
+  --color-green-800: #106043;
+  --color-green-900: #0b4a34;
+  --color-green-950: #062f21;
+
+  --color-amber-500: #c17b3a;
+  --color-amber-600: #a3612a;
+  --color-amber-700: #7f4a20;
+}
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
   line-height: 1.5;
   font-weight: 400;
   font-synthesis: none;
@@ -19,5 +78,24 @@ html, body, #root {
   padding: 0;
   width: 100%;
   min-height: 100vh;
-  background-color: #020617; /* slate-950 */
+  background-color: #0b140e; /* slate-950 */
 }
+
+/* Ticket-stub perforation: two punched circles on a dashed edge. Only
+   reads correctly on a surface sitting directly on the page background. */
+.ticket-edge {
+  position: relative;
+  border-top: 2px dashed var(--color-slate-700);
+}
+.ticket-edge::before,
+.ticket-edge::after {
+  content: "";
+  position: absolute;
+  top: -9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #0b140e;
+}
+.ticket-edge::before { left: -9px; }
+.ticket-edge::after { right: -9px; }

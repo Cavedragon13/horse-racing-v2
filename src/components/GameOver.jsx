@@ -48,13 +48,13 @@ export default function GameOver({ players, onNewGame }) {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6">
       <div className="text-8xl mb-4 select-none">{rankEmoji}</div>
-      <h1 className="text-4xl font-black text-white mb-1">Tournament Over!</h1>
+      <h1 className="font-display text-4xl font-black text-white mb-1">Tournament Over!</h1>
       <p className="text-slate-400 text-center mb-2">{rankMsg}</p>
       {!winner.isHuman && (
-        <p className="text-slate-500 text-sm mb-6">{winner.name} wins with {winner.bux}🪙</p>
+        <p className="font-mono text-slate-500 text-sm mb-6">{winner.name} wins with {winner.bux}🪙</p>
       )}
       {winner.isHuman && (
-        <p className="text-green-400 text-sm mb-6 font-bold">Final balance: {human.bux}🪙</p>
+        <p className="font-mono text-green-400 text-sm mb-6 font-bold">Final balance: {human.bux}🪙</p>
       )}
 
       {/* Final standings */}
@@ -72,15 +72,15 @@ export default function GameOver({ players, onNewGame }) {
             <div className="flex items-center gap-3">
               <span className="text-2xl">{MEDAL[i] || `#${i + 1}`}</span>
               <div>
-                <div className={`font-bold ${p.isHuman ? 'text-yellow-400' : 'text-white'}`}>
+                <div className={`font-display font-bold ${p.isHuman ? 'text-yellow-400' : 'text-white'}`}>
                   {p.name}{p.isHuman ? ' (you)' : ''}
                 </div>
-                <div className="text-slate-600 text-xs">
+                <div className="font-mono text-slate-600 text-xs">
                   {p.wins} win{p.wins !== 1 ? 's' : ''} · +{p.totalWon || 0} / −{p.totalLost || 0}
                 </div>
               </div>
             </div>
-            <div className="text-yellow-400 font-black text-lg">{p.bux}🪙</div>
+            <div className="font-mono text-yellow-400 font-black text-lg">{p.bux}🪙</div>
           </div>
         ))}
       </div>
@@ -88,7 +88,7 @@ export default function GameOver({ players, onNewGame }) {
       {/* Hall of Fame */}
       <div className="bg-slate-900 rounded-2xl border border-slate-800 w-full max-w-sm overflow-hidden mb-6">
         <div className="px-5 py-3 border-b border-slate-800">
-          <div className="text-slate-500 text-xs font-bold uppercase tracking-widest">Hall of Fame</div>
+          <div className="font-display text-slate-500 text-xs font-bold uppercase tracking-widest">Hall of Fame</div>
         </div>
         <div className="p-3">
           <LeaderboardDisplay entries={board} />

@@ -11,6 +11,17 @@ const LENGTH_OPTIONS = [
   { label: 'Until Bust', value: Infinity, sub: 'Endless' },
 ]
 
+function Horseshoe({ flip = false, className = '' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} style={flip ? { transform: 'scaleX(-1)' } : undefined}>
+      <path
+        d="M12 3c-4.4 0-7.5 3.5-7.5 8 0 3.5 2 5.9 2 8.1 0 .7.5 1.1 1.1 1.1s1-.4 1-1.1c0-1.6-1.3-3.6-1.3-6.4 0-3.7 2.1-6.4 4.7-6.4s4.7 2.7 4.7 6.4c0 2.8-1.3 4.8-1.3 6.4 0 .7.4 1.1 1 1.1s1.1-.4 1.1-1.1c0-2.2 2-4.6 2-8.1 0-4.5-3.1-8-7.5-8z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}
+
 export default function SetupScreen({ onStart, savedData }) {
   const [name, setName] = useState(savedData?.playerName || '')
   const [numAI, setNumAI] = useState(1)
@@ -27,7 +38,16 @@ export default function SetupScreen({ onStart, savedData }) {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-slate-950">
+    <div className="relative flex flex-col items-center justify-center min-h-screen p-6 bg-slate-950 overflow-hidden">
+      {/* Atmosphere */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(ellipse 60% 45% at 50% 8%, rgba(201,162,39,0.14), transparent 70%), radial-gradient(ellipse 80% 60% at 50% 100%, rgba(21,122,84,0.12), transparent 70%)',
+        }}
+      />
+
       {/* How to Play */}
       <button
         onClick={openHowToPlay}
@@ -42,18 +62,26 @@ export default function SetupScreen({ onStart, savedData }) {
         onDismiss={() => setTeaserVisible(false)}
       />
 
-      {/* Raven hero */}
-      <div className="relative mb-6 select-none">
-        <img
-          src="raven.png"
-          alt="Bold Rainbow Raven"
-          className="w-32 h-32 rounded-2xl object-cover shadow-2xl shadow-purple-500/20 ring-2 ring-purple-500/30"
-        />
+      {/* Title lockup */}
+      <div className="relative mb-9 select-none text-center">
+        <div className="mx-auto mb-4 h-px w-20 bg-gradient-to-r from-transparent via-yellow-500/70 to-transparent" />
+        <div className="flex items-center justify-center gap-4">
+          <Horseshoe className="w-7 h-7 text-yellow-600/60 flex-shrink-0" />
+          <h1
+            className="font-display font-black text-6xl sm:text-7xl tracking-tight bg-gradient-to-b from-yellow-300 to-yellow-600 bg-clip-text text-transparent"
+            style={{ textShadow: '0 2px 24px rgba(201,162,39,0.25)' }}
+          >
+            Horse Racing
+          </h1>
+          <Horseshoe flip className="w-7 h-7 text-yellow-600/60 flex-shrink-0" />
+        </div>
+        <p className="font-mono text-slate-500 mt-2 text-xs tracking-[0.5em] uppercase">
+          Simulator · Seed 13
+        </p>
+        <div className="mx-auto mt-4 h-px w-20 bg-gradient-to-r from-transparent via-yellow-500/70 to-transparent" />
       </div>
-      <h1 className="text-5xl font-black text-yellow-400 mb-1 tracking-tight">Horse Racing</h1>
-      <p className="text-slate-400 mb-10 text-lg tracking-widest uppercase text-sm">Simulator v2</p>
 
-      <div className="bg-slate-900 rounded-2xl p-8 w-full max-w-md shadow-2xl border border-slate-800">
+      <div className="ticket-edge bg-slate-900 rounded-b-2xl rounded-t-md p-8 pt-9 w-full max-w-md shadow-2xl shadow-black/40 border border-t-0 border-slate-800">
         {/* Player name */}
         <div className="mb-6">
           <label className="block text-slate-400 text-xs font-bold mb-2 uppercase tracking-widest">
@@ -121,7 +149,7 @@ export default function SetupScreen({ onStart, savedData }) {
         <div className="bg-slate-800/50 rounded-xl p-4 mb-6 space-y-2 text-sm">
           <div className="flex justify-between text-slate-400">
             <span>Starting funds</span>
-            <span className="text-yellow-400 font-bold">{GAME_CONFIG.STARTING_BUX} 🪙</span>
+            <span className="font-mono text-yellow-400 font-bold">{GAME_CONFIG.STARTING_BUX} 🪙</span>
           </div>
           {totalRaces === Infinity ? (
             <div className="flex justify-between text-slate-400">
@@ -160,7 +188,7 @@ export default function SetupScreen({ onStart, savedData }) {
         <div className="mt-6 w-full max-w-md bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
           <div className="px-5 py-3 border-b border-slate-800 flex items-center gap-2">
             <span className="text-base">🏆</span>
-            <div className="text-slate-500 text-xs font-black uppercase tracking-widest">Hall of Fame</div>
+            <div className="font-display text-slate-500 text-xs font-black uppercase tracking-widest">Hall of Fame</div>
           </div>
           <div className="p-3">
             <LeaderboardDisplay entries={leaderboard} />

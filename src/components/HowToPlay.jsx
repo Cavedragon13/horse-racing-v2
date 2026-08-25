@@ -28,7 +28,7 @@ export function HowToPlayTeaser({ visible, onOpen, onDismiss }) {
 function Section({ title, children }) {
   return (
     <div className="mb-5 last:mb-0">
-      <div className="text-yellow-400 text-xs font-black uppercase tracking-widest mb-2">{title}</div>
+      <div className="font-display text-yellow-400 text-xs font-black uppercase tracking-widest mb-2">{title}</div>
       <div className="text-slate-300 text-sm leading-relaxed space-y-2">{children}</div>
     </div>
   )
@@ -47,7 +47,7 @@ export function HowToPlayModal({ open, onClose }) {
         onClick={e => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-black text-yellow-400">How to Play</h2>
+          <h2 className="font-display text-xl font-black text-yellow-400">How to Play</h2>
           <button
             onClick={onClose}
             aria-label="Close"

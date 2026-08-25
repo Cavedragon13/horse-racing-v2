@@ -33,9 +33,9 @@ function LoanSharkPanel({ human, dayStartBux, onLoan, onRepay }) {
     <div className={`rounded-xl border overflow-hidden ${hasLoan ? 'border-red-800' : 'border-slate-700'}`}>
       <div className={`px-4 py-2.5 flex items-center gap-2 ${hasLoan ? 'bg-red-950/60' : 'bg-slate-800/60'}`}>
         <span className="text-lg">🦈</span>
-        <span className="text-xs font-black uppercase tracking-widest text-slate-300">The Loan Shark</span>
+        <span className="font-display text-xs font-black uppercase tracking-widest text-slate-300">The Loan Shark</span>
         {hasLoan && (
-          <span className="ml-auto text-xs text-red-400 font-bold">
+          <span className="font-mono ml-auto text-xs text-red-400 font-bold">
             Vig: {Math.round(LOAN_SHARK.VIG_RATE * 100)}%/race
           </span>
         )}
@@ -46,11 +46,11 @@ function LoanSharkPanel({ human, dayStartBux, onLoan, onRepay }) {
           <div className="space-y-1">
             <div className="flex justify-between text-sm">
               <span className="text-slate-400">Outstanding</span>
-              <span className="text-red-400 font-bold">{human.loanBalance}🪙</span>
+              <span className="font-mono text-red-400 font-bold">{human.loanBalance}🪙</span>
             </div>
             <div className="flex justify-between text-xs">
               <span className="text-slate-500">Next vig (after this race)</span>
-              <span className="text-orange-400 font-semibold">+{nextVig}🪙</span>
+              <span className="font-mono text-orange-400 font-semibold">+{nextVig}🪙</span>
             </div>
           </div>
         )}
@@ -58,11 +58,11 @@ function LoanSharkPanel({ human, dayStartBux, onLoan, onRepay }) {
         {canBorrow > 0 && (
           <div>
             <div className="text-slate-500 text-xs mb-1.5">
-              Credit available: <span className="text-slate-300 font-semibold">{canBorrow}🪙</span>
+              Credit available: <span className="font-mono text-slate-300 font-semibold">{canBorrow}🪙</span>
             </div>
             <button
               onClick={() => onLoan(canBorrow)}
-              className="w-full py-2 bg-amber-700 hover:bg-amber-600 text-white font-bold rounded-lg text-sm transition-all"
+              className="font-mono w-full py-2 bg-amber-700 hover:bg-amber-600 text-white font-bold rounded-lg text-sm transition-all"
             >
               Borrow {canBorrow}🪙
             </button>
@@ -81,14 +81,14 @@ function LoanSharkPanel({ human, dayStartBux, onLoan, onRepay }) {
                 <button
                   key={amt}
                   onClick={() => onRepay(amt)}
-                  className="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-lg transition-all"
+                  className="font-mono flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-lg transition-all"
                 >
                   {amt}🪙
                 </button>
               ))}
               <button
                 onClick={() => onRepay(maxRepay)}
-                className="flex-1 py-1.5 bg-green-900 hover:bg-green-800 text-green-300 text-xs font-bold rounded-lg transition-all"
+                className="font-mono flex-1 py-1.5 bg-green-900 hover:bg-green-800 text-green-300 text-xs font-bold rounded-lg transition-all"
               >
                 All ({maxRepay}🪙)
               </button>
@@ -188,7 +188,7 @@ export default function BettingScreen({ gs, onRace, onLoan, onRepay, onForfeit }
             {totalRaces === Infinity ? `Race ${cumRace}` : `Race ${cumRace} / ${totalRaces}`}
           </div>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className={`font-bold text-xl ${TYPE_COLOR[type] || 'text-white'}`}>{type}</span>
+            <span className={`font-display font-bold text-xl ${TYPE_COLOR[type] || 'text-white'}`}>{type}</span>
             <span className="text-slate-500">— {distance} furlongs</span>
           </div>
         </div>
@@ -202,11 +202,11 @@ export default function BettingScreen({ gs, onRace, onLoan, onRepay, onForfeit }
           </div>
           <div className="border-l border-slate-700 pl-6">
             <div className="text-slate-500 text-xs">Your balance</div>
-            <div className={`font-black text-2xl leading-none ${isBust ? 'text-red-400' : 'text-yellow-400'}`}>
+            <div className={`font-mono font-black text-2xl leading-none ${isBust ? 'text-red-400' : 'text-yellow-400'}`}>
               {human.bux}🪙
             </div>
             {hasLoan && (
-              <div className="text-red-500 text-xs mt-0.5">owes {human.loanBalance}🪙</div>
+              <div className="font-mono text-red-500 text-xs mt-0.5">owes {human.loanBalance}🪙</div>
             )}
           </div>
         </div>
@@ -269,7 +269,7 @@ export default function BettingScreen({ gs, onRace, onLoan, onRepay, onForfeit }
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-white text-lg">{horse.name}</span>
+                      <span className="font-display font-bold text-white text-lg">{horse.name}</span>
                       {isFav && (
                         <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full font-semibold">
                           FAV
@@ -294,7 +294,7 @@ export default function BettingScreen({ gs, onRace, onLoan, onRepay, onForfeit }
                     ))}
                   </div>
                   <div className="text-right flex-shrink-0 ml-4">
-                    <div className="text-yellow-400 font-black text-2xl leading-none">{odds[horse.id]}x</div>
+                    <div className="font-mono text-yellow-400 font-black text-2xl leading-none">{odds[horse.id]}x</div>
                     <div className="text-slate-600 text-xs">odds</div>
                   </div>
                 </div>
@@ -336,8 +336,8 @@ export default function BettingScreen({ gs, onRace, onLoan, onRepay, onForfeit }
                       <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-slate-800 border border-slate-700">
                         <span className="text-xs font-black text-yellow-400 w-6 flex-shrink-0">{cfg.shortLabel}</span>
                         <div className="flex-1 min-w-0">
-                          <div className="text-white text-sm font-semibold truncate">{legHorse?.name}</div>
-                          <div className="text-slate-500 text-xs">{leg.amount}🪙 @ {eo.toFixed(1)}x → {payout}🪙</div>
+                          <div className="font-display text-white text-sm font-semibold truncate">{legHorse?.name}</div>
+                          <div className="font-mono text-slate-500 text-xs">{leg.amount}🪙 @ {eo.toFixed(1)}x → {payout}🪙</div>
                         </div>
                         <button
                           onClick={() => removeLeg(i)}
@@ -353,10 +353,10 @@ export default function BettingScreen({ gs, onRace, onLoan, onRepay, onForfeit }
                 {/* Parlay info */}
                 {parlayMult && (
                   <div className="mt-2 p-2.5 rounded-lg bg-purple-950/50 border border-purple-700/50">
-                    <div className="text-purple-300 text-xs font-bold uppercase tracking-wider mb-0.5">
+                    <div className="font-display text-purple-300 text-xs font-bold uppercase tracking-wider mb-0.5">
                       🎲 Parlay ×{parlayMult}
                     </div>
-                    <div className="text-slate-400 text-xs">
+                    <div className="font-mono text-slate-400 text-xs">
                       If all {ticket.length} hit: <span className="text-purple-300 font-bold">{parlayPayout}🪙</span>
                       <span className="text-slate-600"> (straight: {ticketStraightPayout}🪙)</span>
                     </div>
@@ -413,8 +413,8 @@ export default function BettingScreen({ gs, onRace, onLoan, onRepay, onForfeit }
                       {selected.number}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-white text-sm truncate">{selected.name}</div>
-                      <div className="text-slate-500 text-xs">Win odds: {odds[selected.id]}x</div>
+                      <div className="font-display font-bold text-white text-sm truncate">{selected.name}</div>
+                      <div className="font-mono text-slate-500 text-xs">Win odds: {odds[selected.id]}x</div>
                     </div>
                   </div>
                 ) : (
@@ -437,7 +437,7 @@ export default function BettingScreen({ gs, onRace, onLoan, onRepay, onForfeit }
                         <button
                           key={amt}
                           onClick={() => setBetAmount(betAmount === amt ? 0 : amt)}
-                          className={`py-2 rounded-lg font-bold text-sm transition-all ${
+                          className={`font-mono py-2 rounded-lg font-bold text-sm transition-all ${
                             betAmount === amt
                               ? 'bg-yellow-500 text-slate-900'
                               : 'bg-slate-800 text-white hover:bg-slate-700'
@@ -449,7 +449,7 @@ export default function BettingScreen({ gs, onRace, onLoan, onRepay, onForfeit }
                       {remainingBux > 0 && (
                         <button
                           onClick={() => setBetAmount(betAmount === remainingBux ? 0 : remainingBux)}
-                          className={`py-2 rounded-lg font-bold text-xs transition-all col-span-3 ${
+                          className={`font-mono py-2 rounded-lg font-bold text-xs transition-all col-span-3 ${
                             betAmount === remainingBux
                               ? 'bg-red-500 text-white'
                               : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
@@ -460,7 +460,7 @@ export default function BettingScreen({ gs, onRace, onLoan, onRepay, onForfeit }
                       )}
                     </div>
                     {betAmount > 0 && selected && (
-                      <div className="text-xs text-slate-600 text-center mb-2">
+                      <div className="font-mono text-xs text-slate-600 text-center mb-2">
                         net +{potentialWin - betAmount}🪙
                       </div>
                     )}
@@ -498,7 +498,7 @@ export default function BettingScreen({ gs, onRace, onLoan, onRepay, onForfeit }
                   <span className={p.isHuman ? 'text-yellow-400 font-bold' : 'text-slate-400'}>
                     #{i + 1} {p.name}
                   </span>
-                  <span className="text-yellow-400 font-bold">{p.bux}🪙</span>
+                  <span className="font-mono text-yellow-400 font-bold">{p.bux}🪙</span>
                 </div>
               ))}
             </div>

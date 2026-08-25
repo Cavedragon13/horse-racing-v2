@@ -97,7 +97,7 @@ export function InitialsEntry({ score, onDone }) {
     return (
       <div>
         <div className="text-center mb-4">
-          <div className="text-yellow-400 font-black text-xl tracking-widest mb-1">
+          <div className="font-mono text-yellow-400 font-black text-xl tracking-widest mb-1">
             {letters.join('')} · {score.toLocaleString()}🪙
           </div>
           <div className="text-slate-500 text-xs">Score saved</div>
@@ -117,7 +117,7 @@ export function InitialsEntry({ score, onDone }) {
     <div>
       <div className="text-center mb-5">
         <div className="text-4xl mb-2">🏆</div>
-        <div className="text-yellow-400 font-black text-2xl tracking-widest animate-pulse">
+        <div className="font-display text-yellow-400 font-black text-2xl tracking-widest animate-pulse">
           HIGH SCORE!
         </div>
         <div className="text-slate-400 text-sm mt-1">{score.toLocaleString()}🪙 — Enter your initials</div>

@@ -75,8 +75,8 @@ export default function ResultsScreen({ gs, onNext, onForfeit }) {
           <div className="text-center mb-6">
             <div className="text-6xl mb-3">🏆</div>
             <div className="text-slate-400 text-xs uppercase tracking-widest mb-1">Winner</div>
-            <div className="text-4xl font-black text-white">{winner?.name}</div>
-            <div className="text-slate-500 mt-1">{odds[winnerId]}x odds</div>
+            <div className="font-display text-4xl font-black text-white">{winner?.name}</div>
+            <div className="font-mono text-slate-500 mt-1">{odds[winnerId]}x odds</div>
           </div>
 
           <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
@@ -108,7 +108,7 @@ export default function ResultsScreen({ gs, onNext, onForfeit }) {
                         : <span className="text-xl w-9">{MEDAL[placeIdx] || `#${placeIdx + 1}`}</span>
                       }
                       <div className="w-6 h-6 rounded-full flex-shrink-0" style={{ backgroundColor: horse?.color }} />
-                      <span className={`font-semibold text-lg ${isBet ? 'text-yellow-400' : 'text-white'}`}>
+                      <span className={`font-display font-semibold text-lg ${isBet ? 'text-yellow-400' : 'text-white'}`}>
                         {horse?.name}{isBet ? ' ⭐' : ''}
                       </span>
                       {isBet && humanTicket && (
@@ -121,7 +121,7 @@ export default function ResultsScreen({ gs, onNext, onForfeit }) {
                         </div>
                       )}
                     </div>
-                    <div className="text-right">
+                    <div className="text-right font-mono">
                       <div className="text-slate-400">{odds[id]}x</div>
                       {totalBet > 0 && <div className="text-slate-600 text-xs">{totalBet}🪙 bet</div>}
                     </div>
@@ -140,7 +140,7 @@ export default function ResultsScreen({ gs, onNext, onForfeit }) {
             {isBust ? (
               <div className="rounded-2xl p-5 border text-center bg-red-950/40 border-red-800">
                 <div className="text-5xl mb-2">💸</div>
-                <div className="text-red-400 font-black text-2xl mb-1">BUSTED</div>
+                <div className="font-display text-red-400 font-black text-2xl mb-1">BUSTED</div>
                 {anyBet && (
                   <div className="text-slate-400 text-sm mb-3">
                     {allWon ? 'All legs hit, but balance is 0' : "Didn't place enough legs"}
@@ -148,12 +148,12 @@ export default function ResultsScreen({ gs, onNext, onForfeit }) {
                 )}
                 <div className="pt-3 border-t border-red-900/50 space-y-1">
                   <div className="text-slate-500 text-xs">Balance</div>
-                  <div className="text-red-400 font-black text-2xl">0🪙</div>
+                  <div className="font-mono text-red-400 font-black text-2xl">0🪙</div>
                   {hasLoan && (
                     <>
                       <div className="text-slate-500 text-xs mt-2">Outstanding debt</div>
-                      <div className="text-red-500 font-bold">{human.loanBalance}🪙</div>
-                      <div className="text-orange-600 text-xs">Vig after next race: +{nextVig}🪙</div>
+                      <div className="font-mono text-red-500 font-bold">{human.loanBalance}🪙</div>
+                      <div className="font-mono text-orange-600 text-xs">Vig after next race: +{nextVig}🪙</div>
                     </>
                   )}
                   <div className={`text-xs mt-2 ${canBorrow > 0 ? 'text-amber-500' : 'text-slate-600'}`}>
@@ -187,7 +187,7 @@ export default function ResultsScreen({ gs, onNext, onForfeit }) {
                             {leg.cfg.shortLabel}
                           </span>
                           <div className="flex-1 min-w-0">
-                            <div className="text-white text-sm font-semibold truncate">{leg.horse?.name}</div>
+                            <div className="font-display text-white text-sm font-semibold truncate">{leg.horse?.name}</div>
                             <div className="text-slate-500 text-xs">
                               {leg.won
                                 ? `${placeLabel(leg.position)} ✓`
@@ -196,7 +196,7 @@ export default function ResultsScreen({ gs, onNext, onForfeit }) {
                                 : 'Did not finish'}
                             </div>
                           </div>
-                          <div className={`text-sm font-bold flex-shrink-0 ${leg.won ? 'text-green-400' : 'text-red-400'}`}>
+                          <div className={`font-mono text-sm font-bold flex-shrink-0 ${leg.won ? 'text-green-400' : 'text-red-400'}`}>
                             {leg.won ? `+${leg.payout}` : `-${leg.amount}`}🪙
                           </div>
                         </div>
@@ -206,8 +206,8 @@ export default function ResultsScreen({ gs, onNext, onForfeit }) {
                     {/* Parlay bonus */}
                     {allWon && legResults.length >= 2 && (
                       <div className="mb-3 p-2.5 rounded-lg bg-purple-950/50 border border-purple-600/50 text-center">
-                        <div className="text-purple-300 font-black text-sm">🎲 PARLAY BONUS ×{parlayMult}</div>
-                        <div className="text-xs text-slate-400">
+                        <div className="font-display text-purple-300 font-black text-sm">🎲 PARLAY BONUS ×{parlayMult}</div>
+                        <div className="font-mono text-xs text-slate-400">
                           {straightTotal}🪙 straight → <span className="text-purple-200 font-bold">{finalPayout}🪙</span>
                         </div>
                       </div>
@@ -215,7 +215,7 @@ export default function ResultsScreen({ gs, onNext, onForfeit }) {
 
                     {/* Net summary */}
                     <div className="text-center pt-2 border-t border-slate-700/50">
-                      <div className={`text-3xl font-black ${net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      <div className={`font-mono text-3xl font-black ${net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                         {net >= 0 ? `+${net}` : net}🪙
                       </div>
                       <div className="text-slate-500 text-xs mt-0.5">net result</div>
@@ -224,9 +224,9 @@ export default function ResultsScreen({ gs, onNext, onForfeit }) {
                 )}
                 <div className="mt-3 pt-3 border-t border-slate-700">
                   <div className="text-slate-500 text-xs">Balance</div>
-                  <div className="text-yellow-400 font-black text-2xl">{human.bux}🪙</div>
+                  <div className="font-mono text-yellow-400 font-black text-2xl">{human.bux}🪙</div>
                   {hasLoan && (
-                    <div className="text-red-500 text-xs mt-1">
+                    <div className="font-mono text-red-500 text-xs mt-1">
                       Owes {human.loanBalance}🪙 · Vig after next race: +{nextVig}🪙
                     </div>
                   )}
@@ -248,11 +248,11 @@ export default function ResultsScreen({ gs, onNext, onForfeit }) {
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-slate-600 text-sm w-5">#{i + 1}</span>
-                    <span className={`font-semibold ${p.isHuman ? 'text-yellow-400' : 'text-slate-300'}`}>
+                    <span className={`font-display font-semibold ${p.isHuman ? 'text-yellow-400' : 'text-slate-300'}`}>
                       {p.name}{p.isHuman ? ' (you)' : ''}
                     </span>
                   </div>
-                  <span className={`font-bold ${p.isHuman && p.bux === 0 ? 'text-red-400' : 'text-yellow-400'}`}>
+                  <span className={`font-mono font-bold ${p.isHuman && p.bux === 0 ? 'text-red-400' : 'text-yellow-400'}`}>
                     {p.bux}🪙
                   </span>
                 </div>

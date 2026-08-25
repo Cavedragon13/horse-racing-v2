@@ -59,7 +59,7 @@ export default function RaceTrack({ race, bets, players, onComplete }) {
       <div className="bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center justify-between">
         <div>
           <div className="text-slate-500 text-xs uppercase tracking-widest">🏁 Race in progress</div>
-          <div className="font-bold text-xl" style={{ color: TYPE_COLOR[type] || '#fff' }}>
+          <div className="font-display font-bold text-xl" style={{ color: TYPE_COLOR[type] || '#fff' }}>
             {type} · {distance} furlongs
           </div>
         </div>
@@ -68,7 +68,7 @@ export default function RaceTrack({ race, bets, players, onComplete }) {
           {/* Standings during race */}
           <div className="hidden sm:flex items-center gap-3">
             {[...players].sort((a, b) => b.bux - a.bux).map((p, i) => (
-              <div key={p.id} className={`text-sm ${p.isHuman ? 'text-yellow-400 font-bold' : 'text-slate-400'}`}>
+              <div key={p.id} className={`font-mono text-sm ${p.isHuman ? 'text-yellow-400 font-bold' : 'text-slate-400'}`}>
                 #{i + 1} {p.name} {p.bux}🪙
               </div>
             ))}
@@ -82,8 +82,8 @@ export default function RaceTrack({ race, bets, players, onComplete }) {
                 return (
                   <div key={i} className="flex items-center gap-1.5 justify-end">
                     <span className="text-slate-500 text-xs">{leg.betType}</span>
-                    <span className="text-yellow-400 font-bold">{lh?.name}</span>
-                    <span className="text-slate-400 text-xs">{leg.amount}🪙</span>
+                    <span className="font-display text-yellow-400 font-bold">{lh?.name}</span>
+                    <span className="font-mono text-slate-400 text-xs">{leg.amount}🪙</span>
                   </div>
                 )
               })}
@@ -133,7 +133,7 @@ export default function RaceTrack({ race, bets, players, onComplete }) {
                   {horse.number}
                 </div>
                 <div className="min-w-0">
-                  <div className={`font-bold truncate ${isBetHorse ? 'text-yellow-400' : isDnf ? 'text-slate-500' : 'text-white'}`}>
+                  <div className={`font-display font-bold truncate ${isBetHorse ? 'text-yellow-400' : isDnf ? 'text-slate-500' : 'text-white'}`}>
                     {horse.name}{isBetHorse ? ' ⭐' : ''}
                   </div>
                   <div className="text-slate-500 text-xs truncate">{horse.jockey}</div>
