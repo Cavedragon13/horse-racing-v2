@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   base: '/horse-racing-v2/',
   server: {
-    port: 8031,
+    port: 8030,
     strictPort: true,   // fail instead of silently grabbing another port
     host: '0.0.0.0',
   },

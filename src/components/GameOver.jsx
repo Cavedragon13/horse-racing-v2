@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { qualifiesForLeaderboard, loadLeaderboard } from '../utils/leaderboard'
+import { useState, useEffect } from 'react'
+import { qualifiesForLeaderboard, loadLeaderboard, loadLeaderboardWithRemote } from '../utils/leaderboard'
 import { LeaderboardDisplay, InitialsEntry } from './Leaderboard'
 
 const MEDAL = ['🥇', '🥈', '🥉']
@@ -21,6 +21,11 @@ export default function GameOver({ players, onNewGame }) {
   const qualifies = qualifiesForLeaderboard(human.bux)
   const [board, setBoard] = useState(() => loadLeaderboard())
   const [initialsSubmitted, setInitialsSubmitted] = useState(false)
+
+  // Upgrade Hall of Fame with remote data on mount
+  useEffect(() => {
+    loadLeaderboardWithRemote().then(merged => setBoard(merged))
+  }, [])
 
   const handleBoardDone = (newBoard) => {
     setBoard(newBoard)
@@ -81,16 +86,14 @@ export default function GameOver({ players, onNewGame }) {
       </div>
 
       {/* Hall of Fame */}
-      {board.length > 0 && (
-        <div className="bg-slate-900 rounded-2xl border border-slate-800 w-full max-w-sm overflow-hidden mb-6">
-          <div className="px-5 py-3 border-b border-slate-800">
-            <div className="text-slate-500 text-xs font-bold uppercase tracking-widest">Hall of Fame</div>
-          </div>
-          <div className="p-3">
-            <LeaderboardDisplay entries={board} />
-          </div>
+      <div className="bg-slate-900 rounded-2xl border border-slate-800 w-full max-w-sm overflow-hidden mb-6">
+        <div className="px-5 py-3 border-b border-slate-800">
+          <div className="text-slate-500 text-xs font-bold uppercase tracking-widest">Hall of Fame</div>
         </div>
-      )}
+        <div className="p-3">
+          <LeaderboardDisplay entries={board} />
+        </div>
+      </div>
 
       <button
         onClick={onNewGame}

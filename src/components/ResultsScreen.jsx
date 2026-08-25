@@ -1,8 +1,7 @@
-import { GAME_CONFIG, LOAN_SHARK, BETTING_TYPES } from '../utils/constants'
+import { GAME_CONFIG, LOAN_SHARK, BETTING_TYPES, PARLAY_BONUS } from '../utils/constants'
 import { maxLoanAvailable } from '../utils/gameLogic'
 
 const MEDAL = ['🥇', '🥈', '🥉']
-const BET_TYPE_LABEL = { WIN: 'Win', PLACE: 'Place', SHOW: 'Show' }
 
 export default function ResultsScreen({ gs, onNext, onForfeit }) {
   const { lastResult, players, day, race, gameOver, dayStartBux, totalRaces } = gs
@@ -10,20 +9,40 @@ export default function ResultsScreen({ gs, onNext, onForfeit }) {
   const cumRaceNum = (raceDay - 1) * GAME_CONFIG.RACES_PER_DAY + raceNum
 
   const human = players.find(p => p.isHuman)
-  const humanBet = bets[human.id]
-  const humanBetHorse = humanBet ? horses.find(h => h.id === humanBet.horseId) : null
+  const rawBet = bets[human.id]
+  // Normalize to array
+  const humanTicket = rawBet ? (Array.isArray(rawBet) ? rawBet : [rawBet]) : null
 
-  // Resolve win/place/show result
-  const betType = (humanBet?.betType || 'WIN').toUpperCase()
-  const betConfig = BETTING_TYPES[betType] || BETTING_TYPES.WIN
   const orderedFinishers = finishOrder.filter(id => !dnf.includes(id))
   const winnerId = orderedFinishers[0]
   const winner = horses.find(h => h.id === winnerId)
-  const horsePosition = humanBet ? orderedFinishers.indexOf(humanBet.horseId) : -1
-  const humanWon = humanBet && horsePosition >= 0 && horsePosition < betConfig.positions
-  const effectiveOdds = humanWon ? Math.max(betConfig.minOdds, odds[humanBet.horseId] * betConfig.rate) : 0
-  const payout = humanWon ? Math.floor(humanBet.amount * effectiveOdds) : 0
-  const net = humanWon ? payout - humanBet.amount : -(humanBet?.amount || 0)
+
+  // Compute per-leg results
+  const legResults = humanTicket ? humanTicket.map(leg => {
+    const betType = (leg.betType || 'WIN').toUpperCase()
+    const cfg = BETTING_TYPES[betType] || BETTING_TYPES.WIN
+    const horseIdx = orderedFinishers.indexOf(leg.horseId)
+    const won = horseIdx >= 0 && horseIdx < cfg.positions
+    const effectiveOdds = won ? Math.max(cfg.minOdds, odds[leg.horseId] * cfg.rate) : 0
+    const payout = won ? Math.floor(leg.amount * effectiveOdds) : 0
+    return {
+      ...leg,
+      betType,
+      cfg,
+      horse: horses.find(h => h.id === leg.horseId),
+      won,
+      payout,
+      position: horseIdx,
+    }
+  }) : []
+
+  const allWon = legResults.length > 0 && legResults.every(l => l.won)
+  const anyBet = legResults.length > 0
+  const straightTotal = legResults.reduce((s, l) => s + l.payout, 0)
+  const totalStake = legResults.reduce((s, l) => s + l.amount, 0)
+  const parlayMult = (allWon && legResults.length >= 2) ? (PARLAY_BONUS[legResults.length] || 1) : 1
+  const finalPayout = Math.floor(straightTotal * parlayMult)
+  const net = finalPayout - totalStake
 
   const isBust = human.bux <= 0
   const canBorrow = maxLoanAvailable(human, dayStartBux || GAME_CONFIG.STARTING_BUX)
@@ -36,6 +55,8 @@ export default function ResultsScreen({ gs, onNext, onForfeit }) {
   else if (isBust) nextLabel = 'See Loan Shark →'
   else if (isNewDay) nextLabel = `Day ${day} — Race 1 →`
   else nextLabel = `Race ${race} →`
+
+  const placeLabel = (idx) => ['1st', '2nd', '3rd'][idx] || `${idx + 1}th`
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col">
@@ -64,12 +85,16 @@ export default function ResultsScreen({ gs, onNext, onForfeit }) {
             </div>
             {(() => {
               const placedFinishers = finishOrder.filter(id => !dnf.includes(id))
+              const betHorseIds = new Set((humanTicket || []).map(l => l.horseId))
               return finishOrder.map((id, i) => {
                 const horse = horses.find(h => h.id === id)
-                const isBet = humanBet?.horseId === id
+                const isBet = betHorseIds.has(id)
                 const isDnf = dnf.includes(id)
                 const placeIdx = isDnf ? -1 : placedFinishers.indexOf(id)
-                const totalBet = Object.values(bets).filter(b => b.horseId === id).reduce((s, b) => s + b.amount, 0)
+                const totalBet = Object.values(bets).reduce((s, rawB) => {
+                  const legs = Array.isArray(rawB) ? rawB : [rawB]
+                  return s + legs.filter(b => b.horseId === id).reduce((ss, b) => ss + b.amount, 0)
+                }, 0)
                 return (
                   <div
                     key={id}
@@ -86,10 +111,14 @@ export default function ResultsScreen({ gs, onNext, onForfeit }) {
                       <span className={`font-semibold text-lg ${isBet ? 'text-yellow-400' : 'text-white'}`}>
                         {horse?.name}{isBet ? ' ⭐' : ''}
                       </span>
-                      {isBet && (
-                        <span className="text-xs bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded font-bold ml-1">
-                          {BET_TYPE_LABEL[betType]}
-                        </span>
+                      {isBet && humanTicket && (
+                        <div className="flex gap-1">
+                          {humanTicket.filter(l => l.horseId === id).map((l, li) => (
+                            <span key={li} className="text-xs bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded font-bold">
+                              {BETTING_TYPES[l.betType]?.shortLabel || l.betType}
+                            </span>
+                          ))}
+                        </div>
                       )}
                     </div>
                     <div className="text-right">
@@ -112,9 +141,9 @@ export default function ResultsScreen({ gs, onNext, onForfeit }) {
               <div className="rounded-2xl p-5 border text-center bg-red-950/40 border-red-800">
                 <div className="text-5xl mb-2">💸</div>
                 <div className="text-red-400 font-black text-2xl mb-1">BUSTED</div>
-                {humanBet && (
+                {anyBet && (
                   <div className="text-slate-400 text-sm mb-3">
-                    {humanBetHorse?.name} {humanWon ? 'came in!' : "didn't place"}
+                    {allWon ? 'All legs hit, but balance is 0' : "Didn't place enough legs"}
                   </div>
                 )}
                 <div className="pt-3 border-t border-red-900/50 space-y-1">
@@ -136,30 +165,60 @@ export default function ResultsScreen({ gs, onNext, onForfeit }) {
               </div>
             ) : (
               <div
-                className={`rounded-2xl p-5 border text-center ${
-                  !humanBet
+                className={`rounded-2xl p-4 border ${
+                  !anyBet
                     ? 'bg-slate-900 border-slate-800'
-                    : humanWon
+                    : allWon
                     ? 'bg-green-950/50 border-green-700'
+                    : legResults.some(l => l.won)
+                    ? 'bg-blue-950/30 border-blue-800'
                     : 'bg-red-950/30 border-red-900'
                 }`}
               >
-                {!humanBet ? (
-                  <div className="text-slate-500">No bet placed</div>
+                {!anyBet ? (
+                  <div className="text-slate-500 text-center">No bet placed</div>
                 ) : (
                   <>
-                    <div className="text-slate-500 text-xs mb-1 uppercase tracking-widest">
-                      {BET_TYPE_LABEL[betType]} bet · {humanBetHorse?.name}
+                    {/* Per-leg breakdown */}
+                    <div className="space-y-2 mb-3">
+                      {legResults.map((leg, i) => (
+                        <div key={i} className={`flex items-center gap-2 p-2 rounded-lg ${leg.won ? 'bg-green-900/30' : 'bg-red-900/20'}`}>
+                          <span className={`text-xs font-black w-5 ${leg.won ? 'text-green-400' : 'text-red-400'}`}>
+                            {leg.cfg.shortLabel}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-white text-sm font-semibold truncate">{leg.horse?.name}</div>
+                            <div className="text-slate-500 text-xs">
+                              {leg.won
+                                ? `${placeLabel(leg.position)} ✓`
+                                : leg.position >= 0
+                                ? `${placeLabel(leg.position)} — needed top ${leg.cfg.positions}`
+                                : 'Did not finish'}
+                            </div>
+                          </div>
+                          <div className={`text-sm font-bold flex-shrink-0 ${leg.won ? 'text-green-400' : 'text-red-400'}`}>
+                            {leg.won ? `+${leg.payout}` : `-${leg.amount}`}🪙
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className={`text-4xl font-black mb-1 ${humanWon ? 'text-green-400' : 'text-red-400'}`}>
-                      {humanWon ? `+${payout}` : `-${humanBet.amount}`} 🪙
-                    </div>
-                    <div className="text-slate-400 text-sm">
-                      {humanWon
-                        ? `Finished ${horsePosition === 0 ? '1st' : horsePosition === 1 ? '2nd' : '3rd'} · net +${net}🪙`
-                        : horsePosition >= 0
-                          ? `Finished ${horsePosition + 1}${['st','nd','rd'][horsePosition] || 'th'} — needed top ${betConfig.positions}`
-                          : `${humanBetHorse?.name} didn't finish`}
+
+                    {/* Parlay bonus */}
+                    {allWon && legResults.length >= 2 && (
+                      <div className="mb-3 p-2.5 rounded-lg bg-purple-950/50 border border-purple-600/50 text-center">
+                        <div className="text-purple-300 font-black text-sm">🎲 PARLAY BONUS ×{parlayMult}</div>
+                        <div className="text-xs text-slate-400">
+                          {straightTotal}🪙 straight → <span className="text-purple-200 font-bold">{finalPayout}🪙</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Net summary */}
+                    <div className="text-center pt-2 border-t border-slate-700/50">
+                      <div className={`text-3xl font-black ${net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {net >= 0 ? `+${net}` : net}🪙
+                      </div>
+                      <div className="text-slate-500 text-xs mt-0.5">net result</div>
                     </div>
                   </>
                 )}

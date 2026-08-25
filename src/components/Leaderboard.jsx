@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { submitScore } from '../utils/leaderboard'
+import { submitScore, loadLeaderboardWithRemote } from '../utils/leaderboard'
 
 const RANK_COLOR = ['text-yellow-400', 'text-slate-300', 'text-amber-600']
 
@@ -83,11 +83,14 @@ export function InitialsEntry({ score, onDone }) {
     }
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const initials = letters.join('')
-    const newBoard = submitScore(initials, score)
-    setBoard(newBoard)
+    const localBoard = submitScore(initials, score)
+    setBoard(localBoard)
     setSubmitted(true)
+    // Pass localBoard so loadLeaderboardWithRemote skips re-reading localStorage
+    const merged = await loadLeaderboardWithRemote(localBoard)
+    setBoard(merged)
   }
 
   if (submitted && board) {

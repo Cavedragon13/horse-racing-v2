@@ -1,7 +1,7 @@
 import {
   RACE_CONFIG, STAT_WEIGHTS, GAME_CONFIG, COME_FROM_BEHIND,
   HORSE_COLORS, HORSE_NUMBERS, AI_BETTING, HEALTH_MODIFIERS,
-  STAT_RANGES, BETTING_CONFIG, BETTING_TYPES, RACE_PHASES, PLAYER_DATA_KEY, LOAN_SHARK,
+  STAT_RANGES, BETTING_CONFIG, BETTING_TYPES, PARLAY_BONUS, RACE_PHASES, PLAYER_DATA_KEY, LOAN_SHARK,
 } from './constants.js';
 
 const HORSE_NAMES = [
@@ -255,21 +255,45 @@ export function makeAIBet(player, horses, odds) {
   return { horseId: target.id, amount };
 }
 
+// bets[playerId] is an array of legs: [{ horseId, amount, betType }, ...]
 // finishOrder: array of horse IDs in finishing order (1st, 2nd, 3rd, ...)
 export function applyBetResults(players, bets, finishOrder, odds) {
   return players.map(player => {
-    const bet = bets[player.id];
-    if (!bet) return player;
-    const betType = (bet.betType || 'WIN').toUpperCase();
-    const config = BETTING_TYPES[betType] || BETTING_TYPES.WIN;
-    const horseIdx = finishOrder.indexOf(bet.horseId);
-    const won = horseIdx >= 0 && horseIdx < config.positions;
-    if (won) {
-      const effectiveOdds = Math.max(config.minOdds, odds[bet.horseId] * config.rate);
-      const payout = Math.floor(bet.amount * effectiveOdds);
-      return { ...player, bux: player.bux + payout, wins: player.wins + 1, totalWon: (player.totalWon || 0) + payout };
-    }
-    return { ...player, bux: Math.max(0, player.bux - bet.amount), totalLost: (player.totalLost || 0) + bet.amount };
+    const raw = bets[player.id];
+    if (!raw) return player;
+
+    // Normalize: support both legacy single-object and new array format
+    const legs = Array.isArray(raw) ? raw : [raw];
+
+    let straightPayout = 0;
+    let totalStake = 0;
+    let allWon = true;
+
+    legs.forEach(leg => {
+      const betType = (leg.betType || 'WIN').toUpperCase();
+      const config = BETTING_TYPES[betType] || BETTING_TYPES.WIN;
+      const horseIdx = finishOrder.indexOf(leg.horseId);
+      const won = horseIdx >= 0 && horseIdx < config.positions;
+      totalStake += leg.amount;
+      if (won) {
+        const effectiveOdds = Math.max(config.minOdds, odds[leg.horseId] * config.rate);
+        straightPayout += Math.floor(leg.amount * effectiveOdds);
+      } else {
+        allWon = false;
+      }
+    });
+
+    const parlayMult = (allWon && legs.length >= 2) ? (PARLAY_BONUS[legs.length] || 1) : 1;
+    const finalPayout = Math.floor(straightPayout * parlayMult);
+    const buxChange = finalPayout - totalStake;
+
+    return {
+      ...player,
+      bux: Math.max(0, player.bux + buxChange),
+      wins: player.wins + (allWon ? 1 : 0),
+      totalWon: (player.totalWon || 0) + finalPayout,
+      totalLost: (player.totalLost || 0) + Math.max(0, totalStake - finalPayout),
+    };
   });
 }
 

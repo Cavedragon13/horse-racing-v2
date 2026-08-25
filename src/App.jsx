@@ -39,16 +39,17 @@ export default function App() {
     setScreen('betting')
   }
 
-  const startRace = (humanBetHorseId, humanBetAmount, humanBetType = 'WIN') => {
+  // ticket: array of { horseId, amount, betType } legs (or empty/null to skip)
+  const startRace = (ticket) => {
     setGs(prev => {
       const human = prev.players.find(p => p.isHuman)
       const bets = {}
-      if (humanBetHorseId && humanBetAmount > 0) {
-        bets[human.id] = { horseId: humanBetHorseId, amount: humanBetAmount, betType: humanBetType }
+      if (ticket && ticket.length > 0) {
+        bets[human.id] = ticket
       }
       prev.players.filter(p => !p.isHuman).forEach(ai => {
         const b = makeAIBet(ai, prev.currentRace.horses, prev.currentRace.odds)
-        if (b) bets[ai.id] = b
+        if (b) bets[ai.id] = [b]
       })
       return { ...prev, currentBets: bets }
     })

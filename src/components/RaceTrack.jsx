@@ -14,7 +14,11 @@ export default function RaceTrack({ race, bets, players, onComplete }) {
   const completedRef = useRef(false)
 
   const human = players.find(p => p.isHuman)
-  const humanBet = bets[human?.id]
+  const rawBet = bets[human?.id]
+  const humanTicket = rawBet ? (Array.isArray(rawBet) ? rawBet : [rawBet]) : null
+  const betHorseIds = humanTicket ? new Set(humanTicket.map(l => l.horseId)) : new Set()
+  // For header display, pick the first leg's horse as primary (legacy compat)
+  const humanBet = humanTicket?.[0] || null
   const betHorse = humanBet ? horses.find(h => h.id === humanBet.horseId) : null
 
   useEffect(() => {
@@ -70,11 +74,19 @@ export default function RaceTrack({ race, bets, players, onComplete }) {
             ))}
           </div>
 
-          {betHorse && (
+          {humanTicket && humanTicket.length > 0 && (
             <div className="text-right text-sm border-l border-slate-700 pl-6">
-              <div className="text-slate-500 text-xs">Your bet</div>
-              <div className="text-yellow-400 font-bold">{betHorse.name}</div>
-              <div className="text-slate-400 text-xs">{humanBet.amount}🪙 @ {odds[humanBet.horseId]}x</div>
+              <div className="text-slate-500 text-xs mb-1">Your ticket</div>
+              {humanTicket.map((leg, i) => {
+                const lh = horses.find(h => h.id === leg.horseId)
+                return (
+                  <div key={i} className="flex items-center gap-1.5 justify-end">
+                    <span className="text-slate-500 text-xs">{leg.betType}</span>
+                    <span className="text-yellow-400 font-bold">{lh?.name}</span>
+                    <span className="text-slate-400 text-xs">{leg.amount}🪙</span>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
@@ -97,7 +109,7 @@ export default function RaceTrack({ race, bets, players, onComplete }) {
           const finishIdx = raceState.finished.indexOf(horse.id)
           const isFinished = finishIdx >= 0
           const isDnf = raceState.dnf.includes(horse.id)
-          const isBetHorse = humanBet?.horseId === horse.id
+          const isBetHorse = betHorseIds.has(horse.id)
           const isCFB = raceState.comeFromBehind.activeHorse === horse.id
           const pct = 2 + pos * 89
           // Non-DNF finishers get medals — DNF horses don't count toward placement
@@ -189,7 +201,7 @@ export default function RaceTrack({ race, bets, players, onComplete }) {
                       ? <span className="text-red-600 font-black text-xs">DNF</span>
                       : <span>{MEDAL[placeIdx] || `#${placeIdx + 1}`}</span>
                     }
-                    <span className={isDnf ? 'text-slate-600' : humanBet?.horseId === id ? 'text-yellow-400 font-bold' : 'text-slate-300'}>
+                    <span className={isDnf ? 'text-slate-600' : betHorseIds.has(id) ? 'text-yellow-400 font-bold' : 'text-slate-300'}>
                       {h?.name}
                     </span>
                   </div>

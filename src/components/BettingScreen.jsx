@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { GAME_CONFIG, LOAN_SHARK, BETTING_TYPES } from '../utils/constants'
+import { GAME_CONFIG, LOAN_SHARK, BETTING_TYPES, PARLAY_BONUS } from '../utils/constants'
 import { maxLoanAvailable } from '../utils/gameLogic'
 
 const STAT_LABEL = { topSpeed: 'Speed', stamina: 'Stamina', sprint: 'Sprint', pace: 'Pace', gate: 'Gate' }
@@ -100,28 +100,84 @@ function LoanSharkPanel({ human, dayStartBux, onLoan, onRepay }) {
   )
 }
 
+function buildBetOptions(maxBux) {
+  if (maxBux <= 0) return []
+  const steps = [1, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000]
+  return steps.filter(b => b < maxBux)
+}
+
 export default function BettingScreen({ gs, onRace, onLoan, onRepay, onForfeit }) {
   const { day, race, players, currentRace, dayStartBux, totalRaces } = gs
   const cumRace = (day - 1) * GAME_CONFIG.RACES_PER_DAY + race
   const { horses, type, distance, odds } = currentRace
 
   const human = players.find(p => p.isHuman)
+
+  // Ticket: array of { betType, horseId, amount }
+  const [ticket, setTicket] = useState([])
+  const [selectedType, setSelectedType] = useState('WIN')
   const [selectedId, setSelectedId] = useState(null)
   const [betAmount, setBetAmount] = useState(0)
-  const [betType, setBetType] = useState('WIN')
 
   const isBust = human.bux <= 0
   const canBorrow = maxLoanAvailable(human, dayStartBux)
   const hasLoan = (human.loanBalance || 0) > 0
   const showShark = hasLoan || isBust || human.bux < 25
 
+  const totalTicketStake = ticket.reduce((s, l) => s + l.amount, 0)
+  const remainingBux = human.bux - totalTicketStake
+  const betOptions = buildBetOptions(remainingBux)
+
   const sorted = [...horses].sort((a, b) => odds[a.id] - odds[b.id])
-  const betOptions = [1, 5, 10, 25].filter(b => b <= human.bux)
   const selected = horses.find(h => h.id === selectedId)
-  const canBet = selected && betAmount > 0
-  const betConfig = BETTING_TYPES[betType] || BETTING_TYPES.WIN
+
+  const ticketTypes = new Set(ticket.map(l => l.betType))
+  const ticketHorseIds = new Set(ticket.map(l => l.horseId))
+
+  // Types available to add (not yet in ticket)
+  const availableTypes = Object.keys(BETTING_TYPES).filter(k => !ticketTypes.has(k))
+
+  // Ensure selectedType is always valid
+  const activeType = ticketTypes.has(selectedType)
+    ? (availableTypes[0] || null)
+    : selectedType
+
+  const betConfig = BETTING_TYPES[activeType] || BETTING_TYPES.WIN
   const effectiveOdds = selected ? Math.max(betConfig.minOdds, odds[selectedId] * betConfig.rate) : 1
-  const potentialWin = canBet ? Math.floor(betAmount * effectiveOdds) : 0
+  const potentialWin = (selected && betAmount > 0) ? Math.floor(betAmount * effectiveOdds) : 0
+
+  const canAddLeg = selected && betAmount > 0 && activeType && ticket.length < 3 && !ticketTypes.has(activeType)
+
+  // Parlay info
+  const parlayMult = ticket.length >= 2 ? (PARLAY_BONUS[ticket.length] || null) : null
+  const ticketStraightPayout = ticket.reduce((sum, leg) => {
+    const cfg = BETTING_TYPES[leg.betType] || BETTING_TYPES.WIN
+    const eo = Math.max(cfg.minOdds, odds[leg.horseId] * cfg.rate)
+    return sum + Math.floor(leg.amount * eo)
+  }, 0)
+  const parlayPayout = parlayMult ? Math.floor(ticketStraightPayout * parlayMult) : 0
+
+  const addLeg = () => {
+    if (!canAddLeg) return
+    setTicket(prev => [...prev, { betType: activeType, horseId: selectedId, amount: betAmount }])
+    setSelectedId(null)
+    setBetAmount(0)
+    // Advance selectedType to next available
+    const nextAvail = availableTypes.filter(k => k !== activeType)
+    if (nextAvail.length > 0) setSelectedType(nextAvail[0])
+  }
+
+  const removeLeg = (idx) => {
+    setTicket(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  const handleRace = () => {
+    if (ticket.length > 0) {
+      onRace(ticket)
+    } else {
+      onRace([])
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col">
@@ -186,15 +242,22 @@ export default function BettingScreen({ gs, onRace, onLoan, onRepay, onForfeit }
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
           {sorted.map((horse, idx) => {
             const isSelected = horse.id === selectedId
+            const isInTicket = ticketHorseIds.has(horse.id)
             const isFav = idx === 0
             return (
               <div
                 key={horse.id}
-                onClick={() => { setSelectedId(isSelected ? null : horse.id); setBetAmount(0) }}
-                className={`rounded-xl border cursor-pointer transition-all ${
-                  isSelected
-                    ? 'border-yellow-500 bg-yellow-500/8'
-                    : 'border-slate-800 bg-slate-900 hover:border-slate-600'
+                onClick={() => {
+                  if (isInTicket) return
+                  setSelectedId(isSelected ? null : horse.id)
+                  setBetAmount(0)
+                }}
+                className={`rounded-xl border transition-all ${
+                  isInTicket
+                    ? 'border-green-700 bg-green-950/20 cursor-default'
+                    : isSelected
+                    ? 'border-yellow-500 bg-yellow-500/8 cursor-pointer'
+                    : 'border-slate-800 bg-slate-900 hover:border-slate-600 cursor-pointer'
                 }`}
               >
                 <div className="flex items-center gap-3 p-3">
@@ -210,6 +273,11 @@ export default function BettingScreen({ gs, onRace, onLoan, onRepay, onForfeit }
                       {isFav && (
                         <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full font-semibold">
                           FAV
+                        </span>
+                      )}
+                      {isInTicket && (
+                        <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full font-semibold">
+                          ON TICKET
                         </span>
                       )}
                     </div>
@@ -252,107 +320,166 @@ export default function BettingScreen({ gs, onRace, onLoan, onRepay, onForfeit }
         <div className="w-72 flex-shrink-0 border-l border-slate-800 flex flex-col bg-slate-900/50">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
-            {selected ? (
+            {/* Ticket legs */}
+            {ticket.length > 0 && (
               <div>
-                <div className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-3">
-                  Betting on
+                <div className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">
+                  Your Ticket
                 </div>
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-900 border border-yellow-500/30">
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black text-white flex-shrink-0"
-                    style={{ backgroundColor: selected.color }}
-                  >
-                    {selected.number}
+                <div className="space-y-1.5">
+                  {ticket.map((leg, i) => {
+                    const legHorse = horses.find(h => h.id === leg.horseId)
+                    const cfg = BETTING_TYPES[leg.betType] || BETTING_TYPES.WIN
+                    const eo = Math.max(cfg.minOdds, odds[leg.horseId] * cfg.rate)
+                    const payout = Math.floor(leg.amount * eo)
+                    return (
+                      <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-slate-800 border border-slate-700">
+                        <span className="text-xs font-black text-yellow-400 w-6 flex-shrink-0">{cfg.shortLabel}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-white text-sm font-semibold truncate">{legHorse?.name}</div>
+                          <div className="text-slate-500 text-xs">{leg.amount}🪙 @ {eo.toFixed(1)}x → {payout}🪙</div>
+                        </div>
+                        <button
+                          onClick={() => removeLeg(i)}
+                          className="text-slate-600 hover:text-red-400 text-sm transition-colors flex-shrink-0"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Parlay info */}
+                {parlayMult && (
+                  <div className="mt-2 p-2.5 rounded-lg bg-purple-950/50 border border-purple-700/50">
+                    <div className="text-purple-300 text-xs font-bold uppercase tracking-wider mb-0.5">
+                      🎲 Parlay ×{parlayMult}
+                    </div>
+                    <div className="text-slate-400 text-xs">
+                      If all {ticket.length} hit: <span className="text-purple-300 font-bold">{parlayPayout}🪙</span>
+                      <span className="text-slate-600"> (straight: {ticketStraightPayout}🪙)</span>
+                    </div>
                   </div>
-                  <div>
-                    <div className="font-bold text-white">{selected.name}</div>
-                    <div className="text-slate-500 text-xs">Win odds: {odds[selected.id]}x</div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <div className="text-4xl mb-2">🐎</div>
-                <div className="text-slate-500 text-sm">
-                  {isBust ? 'Borrow from the shark to keep playing' : 'Select a horse to bet on'}
-                </div>
+                )}
               </div>
             )}
 
-            {selected && !isBust && (
-              <>
-                {/* Win / Place / Show selector */}
-                <div>
-                  <div className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">
-                    Bet type
-                  </div>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {Object.entries(BETTING_TYPES).map(([key, cfg]) => {
-                      const eo = Math.max(cfg.minOdds, odds[selected.id] * cfg.rate)
-                      const active = betType === key
-                      return (
-                        <button
-                          key={key}
-                          onClick={() => setBetType(key)}
-                          className={`py-2 rounded-xl border flex flex-col items-center transition-all ${
-                            active
-                              ? 'bg-yellow-500 border-yellow-400 text-slate-900'
-                              : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500'
-                          }`}
-                        >
-                          <span className="font-black text-sm">{cfg.label}</span>
-                          <span className={`text-xs leading-none mt-0.5 ${active ? 'text-slate-700' : 'text-slate-500'}`}>
-                            {cfg.positions === 1 ? '1st only' : cfg.positions === 2 ? 'Top 2' : 'Top 3'}
-                          </span>
+            {/* Add leg section */}
+            {!isBust && availableTypes.length > 0 && (
+              <div>
+                {/* Bet type tabs */}
+                <div className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">
+                  {ticket.length === 0 ? 'Bet Type' : 'Add Another Leg'}
+                </div>
+                <div className="grid grid-cols-3 gap-1.5 mb-3">
+                  {Object.entries(BETTING_TYPES).map(([key, cfg]) => {
+                    const alreadyAdded = ticketTypes.has(key)
+                    const active = activeType === key && !alreadyAdded
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => { if (!alreadyAdded) setSelectedType(key) }}
+                        disabled={alreadyAdded}
+                        className={`py-2 rounded-xl border flex flex-col items-center transition-all ${
+                          alreadyAdded
+                            ? 'bg-slate-900 border-slate-800 opacity-40 cursor-not-allowed'
+                            : active
+                            ? 'bg-yellow-500 border-yellow-400 text-slate-900'
+                            : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500'
+                        }`}
+                      >
+                        <span className="font-black text-sm">{cfg.label}</span>
+                        <span className={`text-xs leading-none mt-0.5 ${active ? 'text-slate-700' : alreadyAdded ? 'text-slate-600' : 'text-slate-500'}`}>
+                          {cfg.positions === 1 ? '1st only' : cfg.positions === 2 ? 'Top 2' : 'Top 3'}
+                        </span>
+                        {selected && !alreadyAdded && (
                           <span className={`font-bold text-xs mt-1 ${active ? 'text-slate-800' : 'text-yellow-400'}`}>
-                            {eo.toFixed(1)}x
+                            {Math.max(cfg.minOdds, odds[selected.id] * cfg.rate).toFixed(1)}x
                           </span>
-                        </button>
-                      )
-                    })}
-                  </div>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
 
-                {/* Bet amount */}
-                <div>
-                  <div className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">
-                    Bet amount
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 mb-2">
-                    {betOptions.map(amt => (
-                      <button
-                        key={amt}
-                        onClick={() => setBetAmount(betAmount === amt ? 0 : amt)}
-                        className={`py-2.5 rounded-lg font-bold transition-all ${
-                          betAmount === amt
-                            ? 'bg-yellow-500 text-slate-900'
-                            : 'bg-slate-800 text-white hover:bg-slate-700'
-                        }`}
-                      >
-                        {amt}
-                      </button>
-                    ))}
-                    {human.bux > 0 && (
-                      <button
-                        onClick={() => setBetAmount(betAmount === human.bux ? 0 : human.bux)}
-                        className={`py-2.5 rounded-lg font-bold transition-all col-span-3 ${
-                          betAmount === human.bux
-                            ? 'bg-red-500 text-white'
-                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                        }`}
-                      >
-                        All In ({human.bux}🪙)
-                      </button>
-                    )}
-                  </div>
-                  {canBet && (
-                    <div className="text-sm text-slate-400 text-center">
-                      Payout: <span className="text-green-400 font-bold">{potentialWin}🪙</span>
-                      <span className="text-slate-600 ml-1">(net +{potentialWin - betAmount})</span>
+                {/* Selected horse */}
+                {selected ? (
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900 border border-yellow-500/30 mb-3">
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-white flex-shrink-0"
+                      style={{ backgroundColor: selected.color }}
+                    >
+                      {selected.number}
                     </div>
-                  )}
-                </div>
-              </>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-white text-sm truncate">{selected.name}</div>
+                      <div className="text-slate-500 text-xs">Win odds: {odds[selected.id]}x</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-3 text-slate-600 text-sm mb-3">
+                    {isBust ? 'Borrow from the shark to play' : '← Select a horse'}
+                  </div>
+                )}
+
+                {/* Bet amount */}
+                {selected && (
+                  <div>
+                    <div className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">
+                      Amount
+                      {totalTicketStake > 0 && (
+                        <span className="text-slate-600 font-normal ml-2">({remainingBux}🪙 left)</span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5 mb-1.5">
+                      {betOptions.map(amt => (
+                        <button
+                          key={amt}
+                          onClick={() => setBetAmount(betAmount === amt ? 0 : amt)}
+                          className={`py-2 rounded-lg font-bold text-sm transition-all ${
+                            betAmount === amt
+                              ? 'bg-yellow-500 text-slate-900'
+                              : 'bg-slate-800 text-white hover:bg-slate-700'
+                          }`}
+                        >
+                          {amt}
+                        </button>
+                      ))}
+                      {remainingBux > 0 && (
+                        <button
+                          onClick={() => setBetAmount(betAmount === remainingBux ? 0 : remainingBux)}
+                          className={`py-2 rounded-lg font-bold text-xs transition-all col-span-3 ${
+                            betAmount === remainingBux
+                              ? 'bg-red-500 text-white'
+                              : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                          }`}
+                        >
+                          All In ({remainingBux}🪙)
+                        </button>
+                      )}
+                    </div>
+                    {betAmount > 0 && selected && (
+                      <div className="text-xs text-slate-600 text-center mb-2">
+                        net +{potentialWin - betAmount}🪙
+                      </div>
+                    )}
+                    <button
+                      onClick={addLeg}
+                      disabled={!canAddLeg}
+                      className={`w-full py-2.5 rounded-xl font-bold text-sm transition-all ${
+                        canAddLeg
+                          ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                          : 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                      }`}
+                    >
+                      {canAddLeg
+                        ? `Add ${BETTING_TYPES[activeType]?.label} · ${selected.name} · ${betAmount}🪙`
+                        : 'Pick horse + amount'}
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
 
             {showShark && (
@@ -380,18 +507,22 @@ export default function BettingScreen({ gs, onRace, onLoan, onRepay, onForfeit }
           {/* Actions */}
           <div className="p-4 border-t border-slate-800 space-y-2">
             <button
-              onClick={() => canBet && onRace(selectedId, betAmount, betType)}
-              disabled={!canBet}
+              onClick={handleRace}
+              disabled={ticket.length === 0}
               className={`w-full py-3.5 rounded-xl font-black text-lg transition-all ${
-                canBet
+                ticket.length > 0
                   ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900 shadow-lg shadow-yellow-500/20'
                   : 'bg-slate-800 text-slate-600 cursor-not-allowed'
               }`}
             >
-              {canBet ? `${betConfig.label} ${betAmount}🪙 → Race!` : 'Pick horse + amount'}
+              {ticket.length === 0
+                ? 'Build your ticket'
+                : ticket.length === 1
+                ? `Race! · Wagering ${totalTicketStake}🪙`
+                : `Race Parlay! · ${totalTicketStake}🪙 → up to ${parlayPayout}🪙`}
             </button>
             <button
-              onClick={() => onRace(null, 0)}
+              onClick={() => onRace([])}
               className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl font-semibold transition-all text-sm"
             >
               {isBust ? 'Watch Race (no bet)' : 'Skip Bet'}

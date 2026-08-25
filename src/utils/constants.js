@@ -88,6 +88,9 @@ export const BETTING_TYPES = {
   SHOW:  { label: 'Show',  shortLabel: 'S', rate: 0.25, minOdds: 1.1, positions: 3 },
 };
 
+// Parlay bonus multiplier applied to combined straight payout when ALL legs hit
+export const PARLAY_BONUS = { 2: 2.0, 3: 5.0 };
+
 // Jockey system
 export const JOCKEY_CONFIG = {
   FAMILIAR_CHANCE: 0.2,
