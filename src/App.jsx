@@ -6,15 +6,18 @@ import ResultsScreen from './components/ResultsScreen'
 import GameOver from './components/GameOver'
 import { GAME_CONFIG } from './utils/constants'
 import {
-  generateRace, calculateOdds, createPlayer, createAIPlayer,
+  generateRace, calculateOdds, applyNewsTip, createPlayer, createAIPlayer,
   makeAIBet, applyBetResults, savePlayerData, loadPlayerData, clearPlayerData,
   takeLoan, repayLoan, accrueVig,
 } from './utils/gameLogic'
+import { pickRaceNews } from './utils/news'
 import './App.css'
 
 function newRace() {
   const r = generateRace()
-  return { ...r, odds: calculateOdds(r.horses, r.type) }
+  const odds = calculateOdds(r.horses, r.type)
+  const { items: news, tip } = pickRaceNews(r.horses)
+  return { ...r, odds: applyNewsTip(odds, tip), news }
 }
 
 export default function App() {

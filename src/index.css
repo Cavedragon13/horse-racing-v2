@@ -99,3 +99,17 @@ html, body, #root {
 }
 .ticket-edge::before { left: -9px; }
 .ticket-edge::after { right: -9px; }
+
+/* News ticker: two identical content segments side by side, translated by
+   exactly one segment's width for a seamless infinite loop. */
+.ticker-track {
+  width: max-content;
+  animation: ticker-scroll 32s linear infinite;
+}
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}

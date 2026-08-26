@@ -5,10 +5,47 @@ import { GAME_CONFIG } from '../utils/constants'
 const MEDAL = ['🥇', '🥈', '🥉']
 const TYPE_COLOR = { Short: '#4ade80', Medium: '#60a5fa', Long: '#c084fc' }
 
+function WinnerBanner({ result, visible }) {
+  return (
+    <div
+      className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-40 transition-all duration-500 ${
+        visible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'
+      }`}
+    >
+      {result && (
+        <div className="bg-slate-900 border border-yellow-500/40 rounded-2xl shadow-2xl shadow-black/40 px-7 py-4 min-w-[22rem]">
+          <div className="text-center">
+            <div className="font-display text-yellow-400 font-black text-2xl">🏆 {result.win?.name} wins!</div>
+            <div className="font-mono text-slate-500 text-xs mt-0.5">{result.winOdds}x odds</div>
+          </div>
+          {(result.place || result.show) && (
+            <div className="flex items-center justify-center gap-8 mt-3 pt-3 border-t border-slate-800">
+              {result.place && (
+                <div className="text-center">
+                  <div className="text-slate-500 text-xs">🥈 Place</div>
+                  <div className="font-display text-slate-200 font-bold text-sm">{result.place.name}</div>
+                </div>
+              )}
+              {result.show && (
+                <div className="text-center">
+                  <div className="text-slate-500 text-xs">🥉 Show</div>
+                  <div className="font-display text-slate-200 font-bold text-sm">{result.show.name}</div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function RaceTrack({ race, bets, players, onComplete }) {
   const { horses, type, distance, odds } = race
   const [raceState, setRaceState] = useState(() => initRaceState(horses, type))
   const [cfbAlert, setCfbAlert] = useState(null)
+  const [winnerData, setWinnerData] = useState(null)
+  const [winnerVisible, setWinnerVisible] = useState(false)
   const intervalRef = useRef(null)
   const prevCFBRef = useRef(null)
   const completedRef = useRef(false)
@@ -38,6 +75,17 @@ export default function RaceTrack({ race, bets, players, onComplete }) {
         if (next.done && !completedRef.current) {
           completedRef.current = true
           clearInterval(intervalRef.current)
+
+          const placedFinishers = next.finished.filter(id => !next.dnf.includes(id))
+          const [winId, placeId, showId] = placedFinishers
+          setWinnerData({
+            win: horses.find(h => h.id === winId),
+            winOdds: odds[winId],
+            place: placeId ? horses.find(h => h.id === placeId) : null,
+            show: showId ? horses.find(h => h.id === showId) : null,
+          })
+          requestAnimationFrame(() => requestAnimationFrame(() => setWinnerVisible(true)))
+
           setTimeout(() => onComplete(next.finished, next.dnf), 1800)
         }
 
@@ -46,7 +94,7 @@ export default function RaceTrack({ race, bets, players, onComplete }) {
     }, GAME_CONFIG.RACE_UPDATE_INTERVAL_MS)
 
     return () => clearInterval(intervalRef.current)
-  }, [horses, onComplete])
+  }, [horses, odds, onComplete])
 
   // Sort lanes: leader on top
   const displayHorses = [...horses].sort(
@@ -211,6 +259,8 @@ export default function RaceTrack({ race, bets, players, onComplete }) {
           </div>
         )}
       </div>
+
+      <WinnerBanner result={winnerData} visible={winnerVisible} />
     </div>
   )
 }

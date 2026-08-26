@@ -105,6 +105,17 @@ export function calculateOdds(horses, raceType) {
   return odds;
 }
 
+// Shortens a tipped horse's displayed odds slightly. Purely cosmetic — the
+// race simulation (tickRace) never reads odds, so this doesn't touch the
+// horse's actual chances, only what the tote board shows.
+export function applyNewsTip(odds, tip) {
+  if (!tip) return odds
+  const current = odds[tip.horseId]
+  if (current === undefined) return odds
+  const nudged = Math.max(BETTING_CONFIG.MIN_ODDS, +(current * tip.oddsMultiplier).toFixed(1))
+  return { ...odds, [tip.horseId]: nudged }
+}
+
 export function initRaceState(horses, raceType) {
   const weights = STAT_WEIGHTS[raceType.toUpperCase()];
   const positions = {};

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { GAME_CONFIG, LOAN_SHARK, BETTING_TYPES, PARLAY_BONUS } from '../utils/constants'
 import { maxLoanAvailable } from '../utils/gameLogic'
+import NewsTicker from './NewsTicker'
 
 const STAT_LABEL = { topSpeed: 'Speed', stamina: 'Stamina', sprint: 'Sprint', pace: 'Pace', gate: 'Gate' }
 const TYPE_COLOR = { Short: 'text-green-400', Medium: 'text-blue-400', Long: 'text-purple-400' }
@@ -109,7 +110,7 @@ function buildBetOptions(maxBux) {
 export default function BettingScreen({ gs, onRace, onLoan, onRepay, onForfeit }) {
   const { day, race, players, currentRace, dayStartBux, totalRaces } = gs
   const cumRace = (day - 1) * GAME_CONFIG.RACES_PER_DAY + race
-  const { horses, type, distance, odds } = currentRace
+  const { horses, type, distance, odds, news } = currentRace
 
   const human = players.find(p => p.isHuman)
 
@@ -211,6 +212,8 @@ export default function BettingScreen({ gs, onRace, onLoan, onRepay, onForfeit }
           </div>
         </div>
       </div>
+
+      <NewsTicker items={news} />
 
       {/* Bust banner */}
       {isBust && (
